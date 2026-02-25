@@ -7339,7 +7339,7 @@
         // ==================== CASCADING USER LOGIN FIELD ====================
         // This creates a field that lets you upload users from Excel
         // Each user has username, password, name, and any hierarchy columns
-        // NO cross-validation included - completely separate
+        // Interface matches the cascade dropdown style
         
         function initCascadingUserField() {
             console.log('🚀 Initializing Cascading User Login Field...');
@@ -7375,22 +7375,47 @@
             
             // Download template
             window.downloadUserTemplate = function() {
-                // Create headers
                 const headers = ['username', 'password', 'name', ...userData.hierarchyColumns];
                 
-                // Create sample data
+                // Create sample data with headers and example rows
                 const sampleData = [
                     headers,
-                    ['john_doe', 'password123', 'John Doe', 'Eastern Region', 'Kailahun District', 'Luawa Chiefdom', 'Kailahun Gov Hospital'],
-                    ['jane_smith', 'pass456', 'Jane Smith', 'Western Region', 'Western Urban', 'East 1', 'Connaught Hospital'],
+                    ['mohamed', 'mohamed123', 'Mohamed Sillah', 'Eastern Region', 'Kailahun District', 'Luawa Chiefdom', 'Kailahun Gov Hospital'],
+                    ['fatmata', 'fatmata123', 'Fatmata Sesay', 'Western Region', 'Western Urban', 'East 1', 'Connaught Hospital'],
+                    ['john', 'john123', 'John Kamara', 'Northern Region', 'Bombali District', 'Makeni', 'Makeni Regional Hospital'],
                     ['', '', '', '', '', '', ''] // Empty row for user to fill
                 ];
                 
-                // Create workbook
                 const wb = XLSX.utils.book_new();
                 const ws = XLSX.utils.aoa_to_sheet(sampleData);
                 
+                // Add instructions as a separate sheet (like cascade dropdown)
+                const instructionsData = [
+                    ['INSTRUCTIONS FOR CASCADING USER LOGIN'],
+                    [''],
+                    ['REQUIRED COLUMNS:'],
+                    ['username | password | name'],
+                    [''],
+                    ['HIERARCHY COLUMNS (you can add any number):'],
+                    ['region, district, chiefdom, hf (or any names you want)'],
+                    [''],
+                    ['EXAMPLE:'],
+                    ['username, password, name, region, district, chiefdom, hf'],
+                    ['mohamed, 123, Mohamed, Eastern, Kailahun, Luawa, Kailahun Gov Hospital'],
+                    [''],
+                    ['NOTES:'],
+                    ['- Do not change the header row'],
+                    ['- All fields are required'],
+                    ['- Each user can only be assigned to ONE facility at the lowest level'],
+                    ['- Save the file and upload using the "Upload Users Excel" button']
+                ];
+                
+                const wsInstructions = XLSX.utils.aoa_to_sheet(instructionsData);
+                wsInstructions['!cols'] = [{ wch: 60 }];
+                
                 XLSX.utils.book_append_sheet(wb, ws, 'Users');
+                XLSX.utils.book_append_sheet(wb, wsInstructions, 'Instructions');
+                
                 XLSX.writeFile(wb, 'cascading_users_template.xlsx');
                 
                 if (typeof notify === 'function') {
@@ -7490,10 +7515,13 @@
             };
         
             // ==================== FIELD PROPERTIES ====================
-            // This shows in the right panel when field is selected
+            // This shows in the right panel when field is selected - matching cascade dropdown style
             window.renderCascadingUserProperties = function(field) {
                 const container = document.getElementById('propertiesContent');
                 if (!container) return;
+                
+                // Find the cross-validation section and insert before it
+                const crossSection = container.querySelector('.prop-section:last-child');
                 
                 const html = `
                     <div class="prop-section">
@@ -7502,48 +7530,44 @@
                             Cascading User Login
                         </div>
                         
-                        <div style="background:#e8f4fc; padding:12px; border-radius:8px; margin-bottom:15px;">
-                            <div style="font-size:12px; margin-bottom:5px;">
-                                <strong>Status:</strong> ${userData.users.length} users loaded
+                        <div style="background:#f8f9fa; padding:10px; border-radius:6px; margin-bottom:12px; border:1px dashed #dee2e6;">
+                            <div style="font-size:10px;font-weight:700;color:#004080;margin-bottom:6px;">
+                                <span data-icon="info" data-size="10"></span> User Management:
                             </div>
-                            <div style="font-size:11px; color:#666;">
-                                Hierarchy: ${userData.hierarchyColumns.join(' → ')}
+                            <p style="font-size:9px;color:#666;margin-bottom:8px;">
+                                Download template, add users with their hierarchy, then upload.
+                            </p>
+                            
+                            <div style="background:#e8f4fc; padding:8px; border-radius:4px; margin-bottom:10px;">
+                                <div style="font-size:11px;">
+                                    <strong>Status:</strong> ${userData.users.length} users loaded
+                                </div>
+                                <div style="font-size:10px; color:#666;">
+                                    Hierarchy: ${userData.hierarchyColumns.join(' → ')}
+                                </div>
                             </div>
-                            ${userData.users.length > 0 ? `
-                                <div style="margin-top:10px; font-size:11px; color:#28a745;">
-                                    ✓ Ready to use
-                                </div>
-                            ` : `
-                                <div style="margin-top:10px; font-size:11px; color:#dc3545;">
-                                    ⚠ No users loaded. Upload Excel file below.
-                                </div>
-                            `}
-                        </div>
-                        
-                        <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:15px;">
-                            <!-- Download Template Button -->
-                            <button class="logic-add-btn" onclick="downloadUserTemplate()" style="background:#17a2b8; width:100%; padding:12px;">
-                                <span data-icon="download" data-size="12"></span> Download Excel Template
+                            
+                            <button class="logic-add-btn" style="background:#6c757d; width:100%; margin-bottom:8px;" onclick="downloadUserTemplate()">
+                                <span data-icon="download" data-size="10"></span> Download Sample Template
                             </button>
                             
-                            <!-- Upload Users Button -->
-                            <div style="width:100%;">
+                            <div style="margin-bottom:8px;">
                                 <input type="file" id="userUpload_${field.id}" accept=".xlsx,.xls" style="display:none;" onchange="uploadUserExcel(this, '${field.id}')">
-                                <button class="logic-add-btn" onclick="document.getElementById('userUpload_${field.id}').click()" style="background:#28a745; width:100%; padding:12px;">
-                                    <span data-icon="upload" data-size="12"></span> Upload Users Excel
+                                <button class="logic-add-btn" style="background:#17a2b8; width:100%;" onclick="document.getElementById('userUpload_${field.id}').click()">
+                                    <span data-icon="upload" data-size="10"></span> Upload Users Excel
                                 </button>
                             </div>
                         </div>
                         
                         <div class="property-group">
                             <label class="property-label">Login Button Text</label>
-                            <input type="text" class="property-input" id="propLoginText" value="${field.loginText || 'Login to Continue'}" 
+                            <input type="text" class="property-input" value="${field.loginText || 'Login to Continue'}" 
                                    onchange="updateField('loginText', this.value)">
                         </div>
                         
                         <div class="property-group">
                             <label class="property-checkbox">
-                                <input type="checkbox" id="propShowHierarchy" ${field.showHierarchy !== false ? 'checked' : ''} 
+                                <input type="checkbox" ${field.showHierarchy !== false ? 'checked' : ''} 
                                        onchange="updateField('showHierarchy', this.checked)">
                                 <span>Show user's hierarchy after login</span>
                             </label>
@@ -7551,25 +7575,24 @@
                     </div>
                 `;
                 
-                // Create a temporary div and append to container
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = html;
-                container.appendChild(tempDiv.firstChild);
+                // Insert before cross-validation section if it exists
+                if (crossSection) {
+                    crossSection.insertAdjacentHTML('beforebegin', html);
+                } else {
+                    container.insertAdjacentHTML('beforeend', html);
+                }
                 
-                // Initialize icons in the new content
                 if (typeof initIcons === 'function') {
                     initIcons();
                 }
             };
         
             // ==================== RENDER IN FORM ====================
-            // This shows in the actual form when previewing
             window.renderCascadingUserField = function(field) {
                 // If user is already logged in
                 if (userData.currentUser) {
                     const user = userData.currentUser;
                     
-                    // Build hierarchy display
                     const hierarchyHtml = userData.hierarchyColumns.map(col => 
                         `<div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px dashed #dee2e6;">
                             <strong>${col}:</strong> <span>${user.hierarchy[col] || ''}</span>

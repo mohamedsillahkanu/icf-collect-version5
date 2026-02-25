@@ -471,6 +471,7 @@
                 <div class="field-type" data-type="phone"><span data-icon="phone" data-size="14"></span> Phone</div>
                 <div class="field-type" data-type="textarea"><span data-icon="align-left" data-size="14"></span> Long Text</div>
             </div>
+            <div class="field-type" data-type="cascadeuser"><span data-icon="users" data-size="14"></span> Cascading User Login</div>
             <div class="sidebar-section">
                 <h3 class="sidebar-title"><span data-icon="check-square" data-size="14"></span> Selection Fields</h3>
                 <div class="field-type" data-type="select"><span data-icon="chevron-down-square" data-size="14"></span> Dropdown</div>
@@ -781,6 +782,7 @@
             'calculator': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="8" y2="10"/><line x1="12" y1="10" x2="12" y2="10"/><line x1="16" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="12" y1="14" x2="12" y2="14"/><line x1="16" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="8" y2="18"/><line x1="12" y1="18" x2="12" y2="18"/><line x1="16" y1="18" x2="16" y2="18"/></svg>',
             'file-edit': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13.5V4a2 2 0 0 1 2-2h8.5L20 7.5V20a2 2 0 0 1-2 2h-5.5"/><polyline points="14 2 14 8 20 8"/><path d="M10.42 12.61a2.1 2.1 0 1 1 2.97 2.97L7.95 21 4 22l1-3.95 5.42-5.44Z"/></svg>',
             'copy-check': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 15 2 2 4-4"/><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>'
+            'users': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
         };
         
         function getIcon(name, size = 16) {
@@ -974,6 +976,7 @@
             gps: { label: 'GPS', icon: 'map-pin', defaultLabel: 'GPS Location', valueType: 'TEXT', category: 'text' },
             qrcode: { label: 'QR Code', icon: 'qr-code', defaultLabel: 'QR/Barcode Scanner', valueType: 'TEXT', category: 'text' },
             cascade: { label: 'Cascade', icon: 'git-branch', defaultLabel: 'Cascading Dropdown', valueType: 'TEXT', category: 'categorical', cascadeData: [], cascadeColumns: [] },
+            cascadeuser: { label: 'Cascading User', icon: 'users', defaultLabel: 'User Login Field', valueType: 'TEXT', category: 'special' },
             rating: { label: 'Rating', icon: 'star', defaultLabel: 'Rating', valueType: 'INTEGER', category: 'categorical', max: 5 },
             section: { label: 'Section', icon: 'folder', defaultLabel: 'New Section', valueType: null, category: 'structure' }
         };
@@ -7322,6 +7325,526 @@
         init();
         initIcons();
         updateOnlineStatus();
+        // ==================== CASCADING USER FIELD - SINGLE FUNCTION ====================
+        // PASTE THE ENTIRE FUNCTION HERE
+        function initCascadingUserField() {
+            console.log('🚀 Initializing Cascading User Field...');
+
+            // ==================== DATA STORAGE ====================
+            const userData = {
+                users: [
+                    {
+                        username: 'mohamed',
+                        password: 'mohamed123',
+                        name: 'Mohamed Sillah',
+                        hierarchy: {
+                            region: 'Eastern Region',
+                            district: 'Kailahun District',
+                            chiefdom: 'Luawa Chiefdom',
+                            hf: 'Kailahun Gov Hospital'
+                        },
+                        role: 'data_entry',
+                        lastLogin: null
+                    },
+                    {
+                        username: 'fatmata',
+                        password: 'fatmata123',
+                        name: 'Fatmata Sesay',
+                        hierarchy: {
+                            region: 'Western Region',
+                            district: 'Western Urban',
+                            chiefdom: 'East 1',
+                            hf: 'Connaught Hospital'
+                        },
+                        role: 'data_entry',
+                        lastLogin: null
+                    },
+                    {
+                        username: 'john',
+                        password: 'john123',
+                        name: 'John Kamara',
+                        hierarchy: {
+                            region: 'Northern Region',
+                            district: 'Bombali District',
+                            chiefdom: 'Makeni',
+                            hf: 'Makeni Regional Hospital'
+                        },
+                        role: 'data_entry',
+                        lastLogin: null
+                    }
+                ],
+                
+                facilities: [
+                    { region: 'Eastern Region', district: 'Kailahun District', chiefdom: 'Luawa Chiefdom', hf: 'Kailahun Gov Hospital' },
+                    { region: 'Eastern Region', district: 'Kailahun District', chiefdom: 'Luawa Chiefdom', hf: 'Luawa CHC' },
+                    { region: 'Eastern Region', district: 'Kailahun District', chiefdom: 'Jawei Chiefdom', hf: 'Daru CHC' },
+                    { region: 'Western Region', district: 'Western Urban', chiefdom: 'East 1', hf: 'Connaught Hospital' },
+                    { region: 'Western Region', district: 'Western Urban', chiefdom: 'East 2', hf: 'Rokupa CHC' },
+                    { region: 'Northern Region', district: 'Bombali District', chiefdom: 'Makeni', hf: 'Makeni Regional Hospital' }
+                ],
+                
+                submissions: [],
+                hierarchyColumns: ['region', 'district', 'chiefdom', 'hf'],
+                currentUser: null
+            };
+
+            // Load from storage
+            try {
+                const saved = safeStorage.getItem('icfCascadeUsers');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    userData.users = parsed.users || userData.users;
+                    userData.facilities = parsed.facilities || userData.facilities;
+                    userData.submissions = parsed.submissions || [];
+                    
+                    if (userData.facilities.length > 0) {
+                        userData.hierarchyColumns = Object.keys(userData.facilities[0]);
+                    } else if (userData.users.length > 0 && userData.users[0].hierarchy) {
+                        userData.hierarchyColumns = Object.keys(userData.users[0].hierarchy);
+                    }
+                }
+            } catch (err) {
+                console.log('No saved user data');
+            }
+
+            // Save to storage
+            function saveData() {
+                safeStorage.setItem('icfCascadeUsers', JSON.stringify({
+                    users: userData.users,
+                    facilities: userData.facilities,
+                    submissions: userData.submissions
+                }));
+            }
+
+            // ==================== EXCEL FUNCTIONS ====================
+            window.downloadUserTemplate = function() {
+                const headers = ['username', 'password', 'name', ...userData.hierarchyColumns];
+                const sampleData = [headers];
+                
+                userData.users.slice(0, 2).forEach(user => {
+                    const row = [
+                        user.username,
+                        user.password,
+                        user.name,
+                        ...userData.hierarchyColumns.map(col => user.hierarchy[col] || '')
+                    ];
+                    sampleData.push(row);
+                });
+                
+                sampleData.push(Array(headers.length).fill(''));
+                
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.aoa_to_sheet(sampleData);
+                XLSX.utils.book_append_sheet(wb, ws, 'Users');
+                XLSX.writeFile(wb, 'user_template.xlsx');
+                
+                if (typeof notify === 'function') notify('📥 Template downloaded!', 'success');
+            };
+
+            window.downloadFacilitiesTemplate = function() {
+                const headers = userData.hierarchyColumns;
+                const sampleData = [headers];
+                
+                userData.facilities.slice(0, 3).forEach(f => {
+                    sampleData.push(userData.hierarchyColumns.map(col => f[col] || ''));
+                });
+                
+                sampleData.push(Array(headers.length).fill(''));
+                
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.aoa_to_sheet(sampleData);
+                XLSX.utils.book_append_sheet(wb, ws, 'Facilities');
+                XLSX.writeFile(wb, 'facilities_template.xlsx');
+            };
+
+            window.uploadUserExcel = function(input, fieldId) {
+                const file = input.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const rows = XLSX.utils.sheet_to_json(sheet);
+                        
+                        const headers = Object.keys(rows[0]);
+                        const required = ['username', 'password', 'name'];
+                        const missing = required.filter(h => !headers.includes(h));
+                        
+                        if (missing.length > 0) {
+                            alert(`Missing headers: ${missing.join(', ')}`);
+                            return;
+                        }
+                        
+                        const hierarchyCols = headers.filter(h => !required.includes(h));
+                        const newUsers = rows.map(row => {
+                            if (!row.username) return null;
+                            const hierarchy = {};
+                            hierarchyCols.forEach(col => hierarchy[col] = String(row[col] || '').trim());
+                            return {
+                                username: String(row.username).trim(),
+                                password: String(row.password).trim(),
+                                name: String(row.name).trim(),
+                                hierarchy: hierarchy,
+                                role: 'data_entry',
+                                lastLogin: null
+                            };
+                        }).filter(u => u);
+                        
+                        userData.users = newUsers;
+                        userData.hierarchyColumns = hierarchyCols;
+                        saveData();
+                        
+                        alert(`✅ Loaded ${newUsers.length} users!`);
+                        
+                        if (fieldId && typeof renderProperties === 'function') {
+                            renderProperties();
+                        }
+                        
+                    } catch (err) {
+                        console.error(err);
+                        alert('Error reading file');
+                    }
+                    input.value = '';
+                };
+                reader.readAsArrayBuffer(file);
+            };
+
+            window.uploadFacilitiesExcel = function(input, fieldId) {
+                const file = input.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const rows = XLSX.utils.sheet_to_json(sheet);
+                        
+                        const headers = Object.keys(rows[0]);
+                        const newFacilities = rows.map(row => {
+                            const f = {};
+                            headers.forEach(col => f[col] = String(row[col] || '').trim());
+                            return f;
+                        }).filter(f => Object.values(f).some(v => v));
+                        
+                        userData.facilities = newFacilities;
+                        userData.hierarchyColumns = headers;
+                        saveData();
+                        
+                        alert(`✅ Loaded ${newFacilities.length} facilities!`);
+                        
+                        if (fieldId && typeof renderProperties === 'function') {
+                            renderProperties();
+                        }
+                        
+                    } catch (err) {
+                        console.error(err);
+                        alert('Error reading file');
+                    }
+                    input.value = '';
+                };
+                reader.readAsArrayBuffer(file);
+            };
+
+            // ==================== TARGET CALCULATION ====================
+            function calculateUserTarget(user) {
+                if (!user || !user.hierarchy) return 0;
+                
+                const lowestLevel = userData.hierarchyColumns[userData.hierarchyColumns.length - 1];
+                const lowestValue = user.hierarchy[lowestLevel];
+                
+                if (!lowestValue) return 0;
+                
+                return userData.facilities.filter(f => {
+                    for (let i = 0; i < userData.hierarchyColumns.length; i++) {
+                        const col = userData.hierarchyColumns[i];
+                        const userVal = user.hierarchy[col];
+                        const facilityVal = f[col];
+                        if (userVal && facilityVal !== userVal) return false;
+                    }
+                    return true;
+                }).length || 1;
+            }
+
+            function calculateUserCompleted(user) {
+                return userData.submissions.filter(s => s.username === user.username).length;
+            }
+
+            // ==================== FIELD PROPERTIES ====================
+            window.renderCascadingUserProperties = function(field) {
+                const container = document.getElementById('propertiesContent');
+                if (!container) return;
+                
+                const target = userData.currentUser ? calculateUserTarget(userData.currentUser) : 0;
+                const completed = userData.currentUser ? calculateUserCompleted(userData.currentUser) : 0;
+                
+                const html = `
+                    <div class="prop-section">
+                        <div class="prop-section-title">
+                            <span data-icon="users" data-size="12"></span> 
+                            Cascading User Login
+                        </div>
+                        
+                        <div style="background:#e8f4fc; padding:12px; border-radius:8px; margin-bottom:15px;">
+                            <div style="font-size:11px; margin-bottom:5px;">
+                                <strong>Status:</strong> ${userData.users.length} users, ${userData.facilities.length} facilities
+                            </div>
+                            <div style="font-size:10px; color:#666;">
+                                Hierarchy: ${userData.hierarchyColumns.join(' → ')}
+                            </div>
+                            ${userData.currentUser ? `
+                                <div style="margin-top:10px; padding-top:10px; border-top:1px solid #ccc;">
+                                    <div><strong>Current User:</strong> ${userData.currentUser.name}</div>
+                                    <div><strong>Target:</strong> ${target} facilities</div>
+                                    <div><strong>Completed:</strong> ${completed} submissions</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                        
+                        <div style="display:grid; gap:10px; margin-bottom:15px;">
+                            <button class="logic-add-btn" onclick="downloadUserTemplate()" style="background:#17a2b8;">
+                                <span data-icon="download" data-size="10"></span> Download User Template
+                            </button>
+                            
+                            <div>
+                                <input type="file" id="userUpload_${field.id}" accept=".xlsx,.xls" style="display:none;" onchange="uploadUserExcel(this, '${field.id}')">
+                                <button class="logic-add-btn" onclick="document.getElementById('userUpload_${field.id}').click()" style="background:#28a745;">
+                                    <span data-icon="upload" data-size="10"></span> Upload Users Excel
+                                </button>
+                            </div>
+                            
+                            <button class="logic-add-btn" onclick="downloadFacilitiesTemplate()" style="background:#6f42c1;">
+                                <span data-icon="download" data-size="10"></span> Download Facilities Template
+                            </button>
+                            
+                            <div>
+                                <input type="file" id="facilitiesUpload_${field.id}" accept=".xlsx,.xls" style="display:none;" onchange="uploadFacilitiesExcel(this, '${field.id}')">
+                                <button class="logic-add-btn" onclick="document.getElementById('facilitiesUpload_${field.id}').click()" style="background:#fd7e14;">
+                                    <span data-icon="upload" data-size="10"></span> Upload Facilities Excel
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="property-group">
+                            <label class="property-label">Login Button Text</label>
+                            <input type="text" class="property-input" id="propLoginText" value="${field.loginText || 'Login to Continue'}" 
+                                   onchange="updateField('loginText', this.value)">
+                        </div>
+                        
+                        <div class="property-group">
+                            <label class="property-checkbox">
+                                <input type="checkbox" id="propShowHierarchy" ${field.showHierarchy !== false ? 'checked' : ''} 
+                                       onchange="updateField('showHierarchy', this.checked)">
+                                <span>Show hierarchy after login</span>
+                            </label>
+                        </div>
+                        
+                        <div class="property-group">
+                            <label class="property-checkbox">
+                                <input type="checkbox" id="propShowDashboard" ${field.showDashboard ? 'checked' : ''} 
+                                       onchange="updateField('showDashboard', this.checked)">
+                                <span>Show target dashboard</span>
+                            </label>
+                        </div>
+                    </div>
+                `;
+                
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+                container.appendChild(tempDiv.firstChild);
+                if (typeof initIcons === 'function') initIcons();
+            };
+
+            // ==================== RENDER IN FORM ====================
+            window.renderCascadingUserField = function(field) {
+                // If user is logged in, show their info
+                if (userData.currentUser) {
+                    const user = userData.currentUser;
+                    const target = calculateUserTarget(user);
+                    const completed = calculateUserCompleted(user);
+                    const progress = target > 0 ? Math.round((completed / target) * 100) : 0;
+                    
+                    const hierarchyHtml = userData.hierarchyColumns.map(col => 
+                        `<div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px dashed #dee2e6;">
+                            <strong>${col}:</strong> <span>${user.hierarchy[col] || ''}</span>
+                        </div>`
+                    ).join('');
+                    
+                    const dashboardHtml = field.showDashboard ? `
+                        <div style="margin-top:15px; padding:15px; background:#f8f9fa; border-radius:8px;">
+                            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:10px;">
+                                <div style="text-align:center;">
+                                    <div style="font-size:20px; font-weight:700; color:#004080;">${target}</div>
+                                    <div style="font-size:10px;">Target</div>
+                                </div>
+                                <div style="text-align:center;">
+                                    <div style="font-size:20px; font-weight:700; color:#28a745;">${completed}</div>
+                                    <div style="font-size:10px;">Done</div>
+                                </div>
+                                <div style="text-align:center;">
+                                    <div style="font-size:20px; font-weight:700; color:${progress >= 100 ? '#28a745' : '#ffc107'};">${progress}%</div>
+                                    <div style="font-size:10px;">Progress</div>
+                                </div>
+                            </div>
+                            <div style="background:#e9ecef; border-radius:10px; height:20px; overflow:hidden;">
+                                <div style="background:${progress >= 100 ? '#28a745' : '#ffc107'}; width:${progress}%; height:100%;"></div>
+                            </div>
+                        </div>
+                    ` : '';
+                    
+                    return `
+                        <div class="viewer-field" data-field-name="${field.name}" style="margin-bottom:20px;">
+                            <label class="viewer-field-label">${field.label}</label>
+                            <div style="background:#e8f4fc; border:2px solid #004080; border-radius:8px; padding:15px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                                    <span style="font-weight:700; color:#004080;">✓ Logged in as ${user.name}</span>
+                                    <button type="button" onclick="logoutCascadingUser('${field.id}')" 
+                                            style="padding:5px 10px; background:#dc3545; color:white; border:none; border-radius:4px; cursor:pointer; font-size:11px;">
+                                        Logout
+                                    </button>
+                                </div>
+                                
+                                ${field.showHierarchy !== false ? `
+                                    <div style="background:white; border-radius:6px; padding:10px; margin-top:10px;">
+                                        <div style="font-size:11px; font-weight:700; margin-bottom:5px;">Your Location:</div>
+                                        ${hierarchyHtml}
+                                    </div>
+                                ` : ''}
+                                
+                                ${dashboardHtml}
+                                
+                                <input type="hidden" name="${field.name}" value="${user.username}">
+                                <input type="hidden" name="${field.name}_hierarchy" value='${JSON.stringify(user.hierarchy)}'>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Show login form
+                return `
+                    <div class="viewer-field" data-field-name="${field.name}" style="margin-bottom:20px;">
+                        <label class="viewer-field-label">${field.label}</label>
+                        <div style="background:#f8f9fa; border:2px solid #dee2e6; border-radius:8px; padding:15px;">
+                            
+                            <div style="margin-bottom:10px;">
+                                <select id="userSelect_${field.id}" style="width:100%; padding:12px; border:2px solid #ddd; border-radius:6px; margin-bottom:10px; font-family:'Oswald';">
+                                    <option value="">-- Select User --</option>
+                                    ${userData.users.map(u => `<option value="${u.username}">${u.name} (${u.hierarchy[userData.hierarchyColumns[userData.hierarchyColumns.length-1]]})</option>`).join('')}
+                                </select>
+                                
+                                <input type="password" id="userPass_${field.id}" placeholder="Enter Password" 
+                                       style="width:100%; padding:12px; border:2px solid #ddd; border-radius:6px; font-family:'Oswald';">
+                            </div>
+                            
+                            <button type="button" onclick="loginCascadingUser('${field.id}')" 
+                                    style="width:100%; padding:12px; background:#004080; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:700;">
+                                ${field.loginText || 'Login to Continue'}
+                            </button>
+                            
+                            <div id="loginMsg_${field.id}" style="margin-top:10px; font-size:11px; color:#dc3545; display:none;"></div>
+                        </div>
+                        <input type="hidden" name="${field.name}" id="${field.name}_hidden">
+                    </div>
+                `;
+            };
+
+            // ==================== LOGIN/LOGOUT FUNCTIONS ====================
+            window.loginCascadingUser = function(fieldId) {
+                const select = document.getElementById(`userSelect_${fieldId}`);
+                const pass = document.getElementById(`userPass_${fieldId}`);
+                const msg = document.getElementById(`loginMsg_${fieldId}`);
+                
+                const username = select.value;
+                const password = pass.value;
+                
+                if (!username || !password) {
+                    msg.style.display = 'block';
+                    msg.textContent = 'Please select user and enter password';
+                    return;
+                }
+                
+                const user = userData.users.find(u => u.username === username && u.password === password);
+                
+                if (!user) {
+                    msg.style.display = 'block';
+                    msg.textContent = 'Invalid password';
+                    return;
+                }
+                
+                user.lastLogin = new Date().toISOString();
+                userData.currentUser = user;
+                saveData();
+                
+                msg.style.display = 'none';
+                
+                // Refresh the form
+                if (typeof renderFormViewer === 'function') {
+                    renderFormViewer();
+                } else {
+                    location.reload();
+                }
+            };
+
+            window.logoutCascadingUser = function() {
+                userData.currentUser = null;
+                if (typeof renderFormViewer === 'function') {
+                    renderFormViewer();
+                } else {
+                    location.reload();
+                }
+            };
+
+            // ==================== SUBMISSION HANDLER ====================
+            window.getCascadingUserSubmission = function() {
+                if (!userData.currentUser) return null;
+                
+                return {
+                    username: userData.currentUser.username,
+                    name: userData.currentUser.name,
+                    hierarchy: userData.currentUser.hierarchy,
+                    timestamp: new Date().toISOString()
+                };
+            };
+
+            window.saveCascadingSubmission = function(formData) {
+                if (!userData.currentUser) return false;
+                
+                const submission = {
+                    id: 'SUB' + String(userData.submissions.length + 1).padStart(3, '0'),
+                    username: userData.currentUser.username,
+                    ...formData,
+                    hierarchy: userData.currentUser.hierarchy,
+                    submittedAt: new Date().toISOString()
+                };
+                
+                userData.submissions.push(submission);
+                saveData();
+                return true;
+            };
+
+            console.log('✅ Cascading User Field Ready! Drag it into your form!');
+            console.log('📥 Use admin/admin123 to access full admin panel');
+        }
+
+        // Initialize the cascading user field
+        setTimeout(() => {
+            if (typeof state !== 'undefined') {
+                initCascadingUserField();
+            } else {
+                const checkState = setInterval(() => {
+                    if (typeof state !== 'undefined') {
+                        clearInterval(checkState);
+                        initCascadingUserField();
+                    }
+                }, 100);
+            }
+        }, 500);
+
+
 
         
         // ==================== CROSS-FIELD VALIDATION ENGINE ====================

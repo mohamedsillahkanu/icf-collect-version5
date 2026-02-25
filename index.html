@@ -7325,138 +7325,93 @@
         init();
         initIcons();
         updateOnlineStatus();
-        // ==================== CASCADING USER FIELD - SINGLE FUNCTION ====================
-        // PASTE THE ENTIRE FUNCTION HERE
+        // ==================== CASCADING USER LOGIN FIELD ====================
+        // This creates a field that lets you upload users from Excel
+        // Each user has username, password, name, and any hierarchy columns
+        
         function initCascadingUserField() {
-            console.log('🚀 Initializing Cascading User Field...');
-
-            // ==================== DATA STORAGE ====================
+            console.log('🚀 Initializing Cascading User Login Field...');
+        
+            // Store user data
             const userData = {
-                users: [
-                    {
-                        username: 'mohamed',
-                        password: 'mohamed123',
-                        name: 'Mohamed Sillah',
-                        hierarchy: {
-                            region: 'Eastern Region',
-                            district: 'Kailahun District',
-                            chiefdom: 'Luawa Chiefdom',
-                            hf: 'Kailahun Gov Hospital'
-                        },
-                        role: 'data_entry',
-                        lastLogin: null
-                    },
-                    {
-                        username: 'fatmata',
-                        password: 'fatmata123',
-                        name: 'Fatmata Sesay',
-                        hierarchy: {
-                            region: 'Western Region',
-                            district: 'Western Urban',
-                            chiefdom: 'East 1',
-                            hf: 'Connaught Hospital'
-                        },
-                        role: 'data_entry',
-                        lastLogin: null
-                    },
-                    {
-                        username: 'john',
-                        password: 'john123',
-                        name: 'John Kamara',
-                        hierarchy: {
-                            region: 'Northern Region',
-                            district: 'Bombali District',
-                            chiefdom: 'Makeni',
-                            hf: 'Makeni Regional Hospital'
-                        },
-                        role: 'data_entry',
-                        lastLogin: null
-                    }
-                ],
-                
-                facilities: [
-                    { region: 'Eastern Region', district: 'Kailahun District', chiefdom: 'Luawa Chiefdom', hf: 'Kailahun Gov Hospital' },
-                    { region: 'Eastern Region', district: 'Kailahun District', chiefdom: 'Luawa Chiefdom', hf: 'Luawa CHC' },
-                    { region: 'Eastern Region', district: 'Kailahun District', chiefdom: 'Jawei Chiefdom', hf: 'Daru CHC' },
-                    { region: 'Western Region', district: 'Western Urban', chiefdom: 'East 1', hf: 'Connaught Hospital' },
-                    { region: 'Western Region', district: 'Western Urban', chiefdom: 'East 2', hf: 'Rokupa CHC' },
-                    { region: 'Northern Region', district: 'Bombali District', chiefdom: 'Makeni', hf: 'Makeni Regional Hospital' }
-                ],
-                
-                submissions: [],
-                hierarchyColumns: ['region', 'district', 'chiefdom', 'hf'],
+                users: [],
+                hierarchyColumns: ['region', 'district', 'chiefdom', 'hf'], // default
                 currentUser: null
             };
-
-            // Load from storage
+        
+            // Load saved data
             try {
-                const saved = safeStorage.getItem('icfCascadeUsers');
+                const saved = safeStorage.getItem('cascadingUsers');
                 if (saved) {
                     const parsed = JSON.parse(saved);
-                    userData.users = parsed.users || userData.users;
-                    userData.facilities = parsed.facilities || userData.facilities;
-                    userData.submissions = parsed.submissions || [];
-                    
-                    if (userData.facilities.length > 0) {
-                        userData.hierarchyColumns = Object.keys(userData.facilities[0]);
-                    } else if (userData.users.length > 0 && userData.users[0].hierarchy) {
-                        userData.hierarchyColumns = Object.keys(userData.users[0].hierarchy);
-                    }
+                    userData.users = parsed.users || [];
+                    userData.hierarchyColumns = parsed.hierarchyColumns || ['region', 'district', 'chiefdom', 'hf'];
                 }
             } catch (err) {
                 console.log('No saved user data');
             }
-
-            // Save to storage
+        
+            // Save data
             function saveData() {
-                safeStorage.setItem('icfCascadeUsers', JSON.stringify({
+                safeStorage.setItem('cascadingUsers', JSON.stringify({
                     users: userData.users,
-                    facilities: userData.facilities,
-                    submissions: userData.submissions
+                    hierarchyColumns: userData.hierarchyColumns
                 }));
             }
-
-            // ==================== EXCEL FUNCTIONS ====================
+        
+            // ==================== EXCEL TEMPLATE FUNCTIONS ====================
+            
+            // Download template - THIS IS WHAT YOU NEED
             window.downloadUserTemplate = function() {
+                // Create headers
                 const headers = ['username', 'password', 'name', ...userData.hierarchyColumns];
-                const sampleData = [headers];
                 
-                userData.users.slice(0, 2).forEach(user => {
-                    const row = [
-                        user.username,
-                        user.password,
-                        user.name,
-                        ...userData.hierarchyColumns.map(col => user.hierarchy[col] || '')
-                    ];
-                    sampleData.push(row);
-                });
+                // Create sample data
+                const sampleData = [
+                    headers,
+                    ['john_doe', 'password123', 'John Doe', 'Eastern Region', 'Kailahun District', 'Luawa Chiefdom', 'Kailahun Gov Hospital'],
+                    ['jane_smith', 'pass456', 'Jane Smith', 'Western Region', 'Western Urban', 'East 1', 'Connaught Hospital'],
+                    ['', '', '', '', '', '', ''] // Empty row for user to fill
+                ];
                 
-                sampleData.push(Array(headers.length).fill(''));
-                
+                // Create workbook
                 const wb = XLSX.utils.book_new();
                 const ws = XLSX.utils.aoa_to_sheet(sampleData);
+                
+                // Add instructions sheet
+                const instructions = [
+                    ['INSTRUCTIONS FOR CASCADING USER LOGIN'],
+                    [''],
+                    ['1. Fill in the "Users" sheet with your data'],
+                    ['2. REQUIRED columns: username, password, name'],
+                    ['3. Hierarchy columns can be ANY names (region, district, facility, etc.)'],
+                    ['4. Each row = one user with their full hierarchy path'],
+                    ['5. Save the file and upload using the "Upload Users" button'],
+                    [''],
+                    ['EXAMPLE:'],
+                    ['username, password, name, region, district, facility'],
+                    ['john, 123, John, Eastern, Kailahun, Kailahun Hospital'],
+                    ['mary, 456, Mary, Western, Urban, Connaught'],
+                    [''],
+                    ['The system will automatically detect your hierarchy columns']
+                ];
+                
+                const wsInstructions = XLSX.utils.aoa_to_sheet(instructions);
+                
                 XLSX.utils.book_append_sheet(wb, ws, 'Users');
-                XLSX.writeFile(wb, 'user_template.xlsx');
+                XLSX.utils.book_append_sheet(wb, wsInstructions, 'Instructions');
                 
-                if (typeof notify === 'function') notify('📥 Template downloaded!', 'success');
+                // Download
+                XLSX.writeFile(wb, 'cascading_users_template.xlsx');
+                
+                if (typeof notify === 'function') {
+                    notify('📥 Template downloaded! Fill it with your users and upload.', 'success');
+                } else {
+                    alert('Template downloaded! Fill it with your users and upload.');
+                }
             };
-
-            window.downloadFacilitiesTemplate = function() {
-                const headers = userData.hierarchyColumns;
-                const sampleData = [headers];
-                
-                userData.facilities.slice(0, 3).forEach(f => {
-                    sampleData.push(userData.hierarchyColumns.map(col => f[col] || ''));
-                });
-                
-                sampleData.push(Array(headers.length).fill(''));
-                
-                const wb = XLSX.utils.book_new();
-                const ws = XLSX.utils.aoa_to_sheet(sampleData);
-                XLSX.utils.book_append_sheet(wb, ws, 'Facilities');
-                XLSX.writeFile(wb, 'facilities_template.xlsx');
-            };
-
+        
+            // Upload users from Excel - THIS IS WHAT YOU NEED
             window.uploadUserExcel = function(input, fieldId) {
                 const file = input.files[0];
                 if (!file) return;
@@ -7466,121 +7421,90 @@
                     try {
                         const data = new Uint8Array(e.target.result);
                         const workbook = XLSX.read(data, { type: 'array' });
-                        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                        
+                        // Get first sheet
+                        const sheetName = workbook.SheetNames[0];
+                        const sheet = workbook.Sheets[sheetName];
                         const rows = XLSX.utils.sheet_to_json(sheet);
                         
-                        const headers = Object.keys(rows[0]);
-                        const required = ['username', 'password', 'name'];
-                        const missing = required.filter(h => !headers.includes(h));
-                        
-                        if (missing.length > 0) {
-                            alert(`Missing headers: ${missing.join(', ')}`);
+                        if (rows.length === 0) {
+                            alert('Excel file is empty');
                             return;
                         }
                         
-                        const hierarchyCols = headers.filter(h => !required.includes(h));
+                        // Get headers from first row
+                        const headers = Object.keys(rows[0]);
+                        
+                        // Check required headers
+                        const requiredHeaders = ['username', 'password', 'name'];
+                        const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+                        
+                        if (missingHeaders.length > 0) {
+                            alert(`Missing required headers: ${missingHeaders.join(', ')}\n\nRequired: username, password, name`);
+                            return;
+                        }
+                        
+                        // Hierarchy columns are all other headers
+                        const hierarchyCols = headers.filter(h => !requiredHeaders.includes(h));
+                        
+                        if (hierarchyCols.length === 0) {
+                            alert('No hierarchy columns found. Add at least one column like region, district, etc.');
+                            return;
+                        }
+                        
+                        // Convert rows to users
                         const newUsers = rows.map(row => {
-                            if (!row.username) return null;
+                            // Skip empty rows
+                            if (!row.username && !row.password && !row.name) return null;
+                            
+                            // Build hierarchy object
                             const hierarchy = {};
-                            hierarchyCols.forEach(col => hierarchy[col] = String(row[col] || '').trim());
+                            hierarchyCols.forEach(col => {
+                                hierarchy[col] = String(row[col] || '').trim();
+                            });
+                            
                             return {
-                                username: String(row.username).trim(),
-                                password: String(row.password).trim(),
-                                name: String(row.name).trim(),
+                                username: String(row.username || '').trim(),
+                                password: String(row.password || '').trim(),
+                                name: String(row.name || '').trim(),
                                 hierarchy: hierarchy,
-                                role: 'data_entry',
                                 lastLogin: null
                             };
-                        }).filter(u => u);
+                        }).filter(u => u && u.username && u.password && u.name);
                         
+                        if (newUsers.length === 0) {
+                            alert('No valid users found. Make sure each row has username, password, and name.');
+                            return;
+                        }
+                        
+                        // Update user data
                         userData.users = newUsers;
                         userData.hierarchyColumns = hierarchyCols;
                         saveData();
                         
-                        alert(`✅ Loaded ${newUsers.length} users!`);
+                        alert(`✅ Successfully loaded ${newUsers.length} users!`);
                         
+                        // Refresh properties panel if field is selected
                         if (fieldId && typeof renderProperties === 'function') {
                             renderProperties();
                         }
                         
                     } catch (err) {
                         console.error(err);
-                        alert('Error reading file');
+                        alert('Error reading Excel file: ' + err.message);
                     }
+                    
+                    // Reset input
                     input.value = '';
                 };
                 reader.readAsArrayBuffer(file);
             };
-
-            window.uploadFacilitiesExcel = function(input, fieldId) {
-                const file = input.files[0];
-                if (!file) return;
-                
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    try {
-                        const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, { type: 'array' });
-                        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                        const rows = XLSX.utils.sheet_to_json(sheet);
-                        
-                        const headers = Object.keys(rows[0]);
-                        const newFacilities = rows.map(row => {
-                            const f = {};
-                            headers.forEach(col => f[col] = String(row[col] || '').trim());
-                            return f;
-                        }).filter(f => Object.values(f).some(v => v));
-                        
-                        userData.facilities = newFacilities;
-                        userData.hierarchyColumns = headers;
-                        saveData();
-                        
-                        alert(`✅ Loaded ${newFacilities.length} facilities!`);
-                        
-                        if (fieldId && typeof renderProperties === 'function') {
-                            renderProperties();
-                        }
-                        
-                    } catch (err) {
-                        console.error(err);
-                        alert('Error reading file');
-                    }
-                    input.value = '';
-                };
-                reader.readAsArrayBuffer(file);
-            };
-
-            // ==================== TARGET CALCULATION ====================
-            function calculateUserTarget(user) {
-                if (!user || !user.hierarchy) return 0;
-                
-                const lowestLevel = userData.hierarchyColumns[userData.hierarchyColumns.length - 1];
-                const lowestValue = user.hierarchy[lowestLevel];
-                
-                if (!lowestValue) return 0;
-                
-                return userData.facilities.filter(f => {
-                    for (let i = 0; i < userData.hierarchyColumns.length; i++) {
-                        const col = userData.hierarchyColumns[i];
-                        const userVal = user.hierarchy[col];
-                        const facilityVal = f[col];
-                        if (userVal && facilityVal !== userVal) return false;
-                    }
-                    return true;
-                }).length || 1;
-            }
-
-            function calculateUserCompleted(user) {
-                return userData.submissions.filter(s => s.username === user.username).length;
-            }
-
+        
             // ==================== FIELD PROPERTIES ====================
+            // This shows in the right panel when field is selected
             window.renderCascadingUserProperties = function(field) {
                 const container = document.getElementById('propertiesContent');
                 if (!container) return;
-                
-                const target = userData.currentUser ? calculateUserTarget(userData.currentUser) : 0;
-                const completed = userData.currentUser ? calculateUserCompleted(userData.currentUser) : 0;
                 
                 const html = `
                     <div class="prop-section">
@@ -7590,41 +7514,25 @@
                         </div>
                         
                         <div style="background:#e8f4fc; padding:12px; border-radius:8px; margin-bottom:15px;">
-                            <div style="font-size:11px; margin-bottom:5px;">
-                                <strong>Status:</strong> ${userData.users.length} users, ${userData.facilities.length} facilities
+                            <div style="font-size:12px; margin-bottom:5px;">
+                                <strong>Status:</strong> ${userData.users.length} users loaded
                             </div>
-                            <div style="font-size:10px; color:#666;">
+                            <div style="font-size:11px; color:#666;">
                                 Hierarchy: ${userData.hierarchyColumns.join(' → ')}
                             </div>
-                            ${userData.currentUser ? `
-                                <div style="margin-top:10px; padding-top:10px; border-top:1px solid #ccc;">
-                                    <div><strong>Current User:</strong> ${userData.currentUser.name}</div>
-                                    <div><strong>Target:</strong> ${target} facilities</div>
-                                    <div><strong>Completed:</strong> ${completed} submissions</div>
-                                </div>
-                            ` : ''}
                         </div>
                         
                         <div style="display:grid; gap:10px; margin-bottom:15px;">
-                            <button class="logic-add-btn" onclick="downloadUserTemplate()" style="background:#17a2b8;">
-                                <span data-icon="download" data-size="10"></span> Download User Template
+                            <!-- Download Template Button -->
+                            <button class="logic-add-btn" onclick="downloadUserTemplate()" style="background:#17a2b8; width:100%;">
+                                <span data-icon="download" data-size="10"></span> Download Excel Template
                             </button>
                             
+                            <!-- Upload Users Button -->
                             <div>
                                 <input type="file" id="userUpload_${field.id}" accept=".xlsx,.xls" style="display:none;" onchange="uploadUserExcel(this, '${field.id}')">
-                                <button class="logic-add-btn" onclick="document.getElementById('userUpload_${field.id}').click()" style="background:#28a745;">
+                                <button class="logic-add-btn" onclick="document.getElementById('userUpload_${field.id}').click()" style="background:#28a745; width:100%;">
                                     <span data-icon="upload" data-size="10"></span> Upload Users Excel
-                                </button>
-                            </div>
-                            
-                            <button class="logic-add-btn" onclick="downloadFacilitiesTemplate()" style="background:#6f42c1;">
-                                <span data-icon="download" data-size="10"></span> Download Facilities Template
-                            </button>
-                            
-                            <div>
-                                <input type="file" id="facilitiesUpload_${field.id}" accept=".xlsx,.xls" style="display:none;" onchange="uploadFacilitiesExcel(this, '${field.id}')">
-                                <button class="logic-add-btn" onclick="document.getElementById('facilitiesUpload_${field.id}').click()" style="background:#fd7e14;">
-                                    <span data-icon="upload" data-size="10"></span> Upload Facilities Excel
                                 </button>
                             </div>
                         </div>
@@ -7639,70 +7547,41 @@
                             <label class="property-checkbox">
                                 <input type="checkbox" id="propShowHierarchy" ${field.showHierarchy !== false ? 'checked' : ''} 
                                        onchange="updateField('showHierarchy', this.checked)">
-                                <span>Show hierarchy after login</span>
-                            </label>
-                        </div>
-                        
-                        <div class="property-group">
-                            <label class="property-checkbox">
-                                <input type="checkbox" id="propShowDashboard" ${field.showDashboard ? 'checked' : ''} 
-                                       onchange="updateField('showDashboard', this.checked)">
-                                <span>Show target dashboard</span>
+                                <span>Show user's hierarchy after login</span>
                             </label>
                         </div>
                     </div>
                 `;
                 
+                // Add to properties panel
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = html;
                 container.appendChild(tempDiv.firstChild);
+                
                 if (typeof initIcons === 'function') initIcons();
             };
-
+        
             // ==================== RENDER IN FORM ====================
+            // This shows in the actual form when previewing
             window.renderCascadingUserField = function(field) {
-                // If user is logged in, show their info
+                // If user is already logged in
                 if (userData.currentUser) {
                     const user = userData.currentUser;
-                    const target = calculateUserTarget(user);
-                    const completed = calculateUserCompleted(user);
-                    const progress = target > 0 ? Math.round((completed / target) * 100) : 0;
                     
+                    // Build hierarchy display
                     const hierarchyHtml = userData.hierarchyColumns.map(col => 
                         `<div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px dashed #dee2e6;">
                             <strong>${col}:</strong> <span>${user.hierarchy[col] || ''}</span>
                         </div>`
                     ).join('');
                     
-                    const dashboardHtml = field.showDashboard ? `
-                        <div style="margin-top:15px; padding:15px; background:#f8f9fa; border-radius:8px;">
-                            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:10px;">
-                                <div style="text-align:center;">
-                                    <div style="font-size:20px; font-weight:700; color:#004080;">${target}</div>
-                                    <div style="font-size:10px;">Target</div>
-                                </div>
-                                <div style="text-align:center;">
-                                    <div style="font-size:20px; font-weight:700; color:#28a745;">${completed}</div>
-                                    <div style="font-size:10px;">Done</div>
-                                </div>
-                                <div style="text-align:center;">
-                                    <div style="font-size:20px; font-weight:700; color:${progress >= 100 ? '#28a745' : '#ffc107'};">${progress}%</div>
-                                    <div style="font-size:10px;">Progress</div>
-                                </div>
-                            </div>
-                            <div style="background:#e9ecef; border-radius:10px; height:20px; overflow:hidden;">
-                                <div style="background:${progress >= 100 ? '#28a745' : '#ffc107'}; width:${progress}%; height:100%;"></div>
-                            </div>
-                        </div>
-                    ` : '';
-                    
                     return `
-                        <div class="viewer-field" data-field-name="${field.name}" style="margin-bottom:20px;">
+                        <div class="viewer-field" data-field-name="${field.name}">
                             <label class="viewer-field-label">${field.label}</label>
                             <div style="background:#e8f4fc; border:2px solid #004080; border-radius:8px; padding:15px;">
                                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                                     <span style="font-weight:700; color:#004080;">✓ Logged in as ${user.name}</span>
-                                    <button type="button" onclick="logoutCascadingUser('${field.id}')" 
+                                    <button type="button" onclick="logoutCascadingUser()" 
                                             style="padding:5px 10px; background:#dc3545; color:white; border:none; border-radius:4px; cursor:pointer; font-size:11px;">
                                         Logout
                                     </button>
@@ -7715,8 +7594,6 @@
                                     </div>
                                 ` : ''}
                                 
-                                ${dashboardHtml}
-                                
                                 <input type="hidden" name="${field.name}" value="${user.username}">
                                 <input type="hidden" name="${field.name}_hierarchy" value='${JSON.stringify(user.hierarchy)}'>
                             </div>
@@ -7726,14 +7603,17 @@
                 
                 // Show login form
                 return `
-                    <div class="viewer-field" data-field-name="${field.name}" style="margin-bottom:20px;">
+                    <div class="viewer-field" data-field-name="${field.name}">
                         <label class="viewer-field-label">${field.label}</label>
                         <div style="background:#f8f9fa; border:2px solid #dee2e6; border-radius:8px; padding:15px;">
                             
                             <div style="margin-bottom:10px;">
                                 <select id="userSelect_${field.id}" style="width:100%; padding:12px; border:2px solid #ddd; border-radius:6px; margin-bottom:10px; font-family:'Oswald';">
                                     <option value="">-- Select User --</option>
-                                    ${userData.users.map(u => `<option value="${u.username}">${u.name} (${u.hierarchy[userData.hierarchyColumns[userData.hierarchyColumns.length-1]]})</option>`).join('')}
+                                    ${userData.users.map(u => {
+                                        const lastLevel = userData.hierarchyColumns[userData.hierarchyColumns.length - 1];
+                                        return `<option value="${u.username}">${u.name} (${u.hierarchy[lastLevel] || ''})</option>`;
+                                    }).join('')}
                                 </select>
                                 
                                 <input type="password" id="userPass_${field.id}" placeholder="Enter Password" 
@@ -7751,7 +7631,7 @@
                     </div>
                 `;
             };
-
+        
             // ==================== LOGIN/LOGOUT FUNCTIONS ====================
             window.loginCascadingUser = function(fieldId) {
                 const select = document.getElementById(`userSelect_${fieldId}`);
@@ -7788,7 +7668,7 @@
                     location.reload();
                 }
             };
-
+        
             window.logoutCascadingUser = function() {
                 userData.currentUser = null;
                 if (typeof renderFormViewer === 'function') {
@@ -7797,40 +7677,12 @@
                     location.reload();
                 }
             };
-
-            // ==================== SUBMISSION HANDLER ====================
-            window.getCascadingUserSubmission = function() {
-                if (!userData.currentUser) return null;
-                
-                return {
-                    username: userData.currentUser.username,
-                    name: userData.currentUser.name,
-                    hierarchy: userData.currentUser.hierarchy,
-                    timestamp: new Date().toISOString()
-                };
-            };
-
-            window.saveCascadingSubmission = function(formData) {
-                if (!userData.currentUser) return false;
-                
-                const submission = {
-                    id: 'SUB' + String(userData.submissions.length + 1).padStart(3, '0'),
-                    username: userData.currentUser.username,
-                    ...formData,
-                    hierarchy: userData.currentUser.hierarchy,
-                    submittedAt: new Date().toISOString()
-                };
-                
-                userData.submissions.push(submission);
-                saveData();
-                return true;
-            };
-
-            console.log('✅ Cascading User Field Ready! Drag it into your form!');
-            console.log('📥 Use admin/admin123 to access full admin panel');
+        
+            console.log('✅ Cascading User Login Field Ready!');
+            console.log('📥 Download template, add users, upload Excel');
         }
-
-        // Initialize the cascading user field
+        
+        // Initialize
         setTimeout(() => {
             if (typeof state !== 'undefined') {
                 initCascadingUserField();
@@ -7843,7 +7695,6 @@
                 }, 100);
             }
         }, 500);
-
 
 
         
